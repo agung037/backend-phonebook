@@ -35,10 +35,22 @@ app.get('/api/persons', (request, response) => {
 
 
 // query specific data berdasarkan id
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
+
+    // temukan berdasarkan id
     Person.findById(request.params.id).then(person => {
-        response.json(person)
+        // jika ditemukan, berikan data
+        if(person){
+            response.json(person)
+        }else{
+            // jika tidak beriksan response error
+            response.status(404).end()
+        }
     })
+    // kemudian jika ada response error 
+    // akan ditangkap oleh express menggunakan error handler di bagian bawah
+    .catch(error => next(error))
+
 })
 
 
@@ -75,35 +87,47 @@ app.post('/api/persons', (request, response) => {
 })
 
 // update data dari mongodb berdasarkan id
-app.put('/api/persons/:id', (request, response) => {
+app.put('/api/persons/:id', (request, response, next) => {
 
     const body = request.body
-    console.log("berusaha mengubah", request.body)
-    Person.findOneAndUpdate({_id: request.params.id}, {number : body.number})
-    .then(() => {
-        Person.findById(request.params.id).then(person => {
-            response.json(person)
-        })
-    })
-    .catch(error => {
-        console.log(error)
-    })
 
+    // membuat object yang menerima parameter berupa name dan number
+    // name dan number berasal dari body json
+    const person = {
+        name: body.name,
+        number: body.number,
+    }
+
+    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+        .then(updatedPerson => {
+            response.json(updatedPerson)
+        })
+        .catch(error => next(error))
 })
 
 
 // menghapus data dari mongodb
-app.delete('/api/persons/:id', (request, response) => {
-    // cari berdasarkan id
-    Person.findById(request.params.id).then(person => {
-        // hapus orang yang berhasil dicari id nya
-        person.remove()
-        // tampilkan di log
-        console.log('data berhasil dihapus')
-    })
+app.delete('/api/persons/:id', (request, response, next) => {
+    Person.findByIdAndRemove(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
+
 })
 
 
+
+// membuat error handler
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+    if(error.name === 'CastError'){
+        return response.status(400).send({error: 'malfomated id'})
+    }
+    next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => console.log(`server run on port ${PORT}`))
