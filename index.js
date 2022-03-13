@@ -2,8 +2,12 @@ const express = require('express')
 const morgan = require('morgan')
 const res = require('express/lib/response')
 const cors = require('cors')
+require('dotenv').config()
 
 const app = express()
+
+// include phonebook model
+const Person = require('./models/person')
 
 app.use(cors())
 app.use(express.json())
@@ -21,92 +25,85 @@ app.use(morgan(function (tokens, req, res) {
 
 
 
-let persons = [
-    
-    { 
-        "id": 1,
-        "name": "Arto Hellas", 
-        "number": "040-123456"
-    },
-    { 
-        "id": 2,
-        "name": "Ada Lovelace", 
-        "number": "39-44-5323523"
-    },
-    { 
-        "id": 3,
-        "name": "Dan Abramov", 
-        "number": "12-43-234345"
-    },
-    { 
-        "id": 4,
-        "name": "Mary Poppendieck", 
-        "number": "39-23-6423122"
-    }
-
-]
-
-
+// query semua data person dari mongodb
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
-})
-
-
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(p => p.id === id)
-
-    if(person){
+    Person.find({}).then(person => {
         response.json(person)
-    }else{
-        response.status(404).end()
-    }
+    })
 })
 
 
+
+// query specific data berdasarkan id
+app.get('/api/persons/:id', (request, response) => {
+    Person.findById(request.params.id).then(person => {
+        response.json(person)
+    })
+})
+
+
+// dapatkan jumlah data dan tampilkan 
 app.get('/info', (request, response) => {
-    const count = persons.length
-    const date = new Date()
-    response.send(`phonebook has info for ${count} people <br> ${date}`)
+    Person.find({}).then(persons => {
+        const count = persons.length
+        const date = new Date()
+        response.send(`phonebook has info for ${count} people <br> ${date}`)
+    })
 })
 
 
-const generateRandom = () => {
-    const min = 100000
-    const max = 999999
-    return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
+// menambahkan data ke mongodb
 app.post('/api/persons', (request, response) => {
-
     const body = request.body
 
-    // check if name and number exsist
-    if(!body.name || !body.number){
-        return response.status(400).json({
-            error: 'name or number missing'
-        })
+    // memberitau jika body kosong
+    if(body.name === undefined){
+        return response.status(400).json({error : 'name missing'})
     }
 
-    // check for duplicate
-    const nameExist = persons.find(p => p.name == body.name)
-
-    if(nameExist){
-        return response.status(400).json({
-            error: "name must be unique"
-        })
-    }
-
-    const person = {
-        id: generateRandom(),
+    // membentuk object Person 
+    const person = new Person({
         name: body.name,
-        number: body.number,
-    }
+        number: body.number
+    })
 
-    persons = persons.concat(person)
-    response.json(person)
+    // menyimpan ke mongodb dan menampilkan hasil penyimpanan
+    person.save().then(savedPerson => {
+        response.json(savedPerson)
+    })
 
 })
+
+// update data dari mongodb berdasarkan id
+app.put('/api/persons/:id', (request, response) => {
+
+    const body = request.body
+    console.log("berusaha mengubah", request.body)
+    Person.findOneAndUpdate({_id: request.params.id}, {number : body.number})
+    .then(() => {
+        Person.findById(request.params.id).then(person => {
+            response.json(person)
+        })
+    })
+    .catch(error => {
+        console.log(error)
+    })
+
+})
+
+
+// menghapus data dari mongodb
+app.delete('/api/persons/:id', (request, response) => {
+    // cari berdasarkan id
+    Person.findById(request.params.id).then(person => {
+        // hapus orang yang berhasil dicari id nya
+        person.remove()
+        // tampilkan di log
+        console.log('data berhasil dihapus')
+    })
+})
+
+
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => console.log(`server run on port ${PORT}`))

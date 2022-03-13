@@ -1,0 +1,27 @@
+### mendapatkan semua kontak person
+GET http://localhost:3001/api/persons
+
+### mendapatkan 1 kontak person berdasarkan id
+GET http://localhost:3001/api/persons/622da244bf5ad51bf44bfab0
+
+### menuliskan person baru
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "Michael Kurniawan",
+    "number": "92342-323"
+}
+
+
+### menghapus data
+DELETE http://localhost:3001/api/persons/622da26fbf5ad51bf44bfab3
+
+
+### update data
+PUT http://localhost:3001/api/persons/622da244bf5ad51bf44bfab0
+Content-Type: application/json
+
+{
+    "number": "0809-8-1234"
+}
