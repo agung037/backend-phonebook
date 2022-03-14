@@ -9,7 +9,7 @@ POST http://localhost:3001/api/persons
 Content-Type: application/json
 
 {
-    "name": "Juragan Kurniawan",
+    "name": "n",
     "number": "231-323"
 }
 
@@ -19,10 +19,10 @@ DELETE http://localhost:3001/api/persons/622db2994565b6db6b7ffa7c
 
 
 ### update data
-PUT http://localhost:3001/api/persons/622e14abaeae54f90f8fd3f9
+PUT http://localhost:3001/api/persons/622ebef1069c2c7e79537203
 Content-Type: application/json
 
 {
-    "name" : "Kusuma Wijaya",
-    "number": "0809-8-1234"
+    "name" : "Po",
+    "number": "0"
 }

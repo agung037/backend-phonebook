@@ -17,8 +17,21 @@ mongoose.connect(url)
 
 
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: String
+    name: {
+        type: String,
+        minlength: 3,
+        required: true
+    },
+    number: {
+        type: String,
+        validate: {
+            validator: (v) =>/^[+]*[(]{0,1}[0-9]{1,3}[)]{0,1}[-\s\./0-9]*$/g.test(v),
+            message: props => `${props.value} is not a valid phone number!`
+        },
+        minlength: [8, "number must be atleast 8 Character"],
+        maxlength: [20, "maximul length 20"],
+        required: [true, "phone number required"]
+    }
 })
 
 // mengubah hasil query dari mongodb

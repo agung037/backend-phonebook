@@ -65,7 +65,7 @@ app.get('/info', (request, response) => {
 
 
 // menambahkan data ke mongodb
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
 
     // memberitau jika body kosong
@@ -80,25 +80,21 @@ app.post('/api/persons', (request, response) => {
     })
 
     // menyimpan ke mongodb dan menampilkan hasil penyimpanan
-    person.save().then(savedPerson => {
-        response.json(savedPerson)
-    })
+    person.save()
+        .then(savedPerson => {
+            response.json(savedPerson)
+        })
+        .catch(error => next(error))
 
 })
 
 // update data dari mongodb berdasarkan id
 app.put('/api/persons/:id', (request, response, next) => {
 
-    const body = request.body
-
-    // membuat object yang menerima parameter berupa name dan number
-    // name dan number berasal dari body json
-    const person = {
-        name: body.name,
-        number: body.number,
-    }
-
-    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+    // secara default validasi di mongoose pada put request di nonaktifkan
+    // ini cara mengaktifkannya
+    const {name, number} = request.body
+    Person.findByIdAndUpdate(request.params.id, {name, number}, {new: true, runValidators:true, context: 'query'})
         .then(updatedPerson => {
             response.json(updatedPerson)
         })
@@ -123,6 +119,9 @@ const errorHandler = (error, request, response, next) => {
     console.error(error.message)
     if(error.name === 'CastError'){
         return response.status(400).send({error: 'malfomated id'})
+    }else if(error.name === 'ValidationError'){
+        console.log("validasi error")
+        return response.status(400).json({error: error.message})
     }
     next(error)
 }
