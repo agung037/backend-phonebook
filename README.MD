@@ -1,2 +1,2 @@
-# bakend for phonebook app
+# demo
 https://quiet-depths-80353.herokuapp.com/
